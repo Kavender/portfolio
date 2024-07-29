@@ -1,0 +1,26 @@
+# Basic
+black==19.10b0
+flake8==7.0.0
+pylint==3.1.0
+# click==7.1.1
+python-dotenv
+
+# APP 
+crewai==0.28.8
+crewai_tools==0.1.6 
+
+# GOOGLE
+google-search-results
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+tavily-python==0.3.1
+
+# LANGCHAIN
+langchain_anthropic
+
+# FILE OPERATION
+python_docx==1.1.2
+PyPDF2==3.0.1
+
+

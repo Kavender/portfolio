@@ -1,0 +1,76 @@
+read_resume_task:
+  description: >
+    Load candidate's resume to read thoroughly.
+    Extract relevant information from the resume. Focus on skills, experience, education, and key achievements.
+    Ensure to capture the candidate's professional summary, technical skills, work history, and educational background.
+    Path to resume: {resume_path}
+  expected_output: >
+    A structured summary of the resume, including:
+    - Professional Summary
+    - Technical Skills
+    - Top 3 Highlights based on Work History/Projects
+    - Top 3 Key Achievements 
+
+  
+read_job_descrip_task:
+  description: >
+    Load candidate's job description to analyze thoroughly.
+    Evaluate and match the candidates to the best job positions based on their qualifications and suitability.
+    Don't make up result if cannot locate or read the job description from designated path.
+    Path to job description: {job_description_path}
+  expected_output: >
+    Listed top 5 requirements for the best candidates in bullet points.
+
+
+match_and_analyze_candidates_task:
+  description: >
+    Evaluate and match the candidates to the requirements in job description based on their qualifications and suitability.
+    Score each candidate to reflect their alignment with the job requirements, ensuring a fair and transparent assessment process.
+    Don't try to scrape people's linkedin, since you don't have access to it.
+  expected_output: >
+    Score the candidate based on how well his/her background matches the job description, providing an overall fitness score between 0-100.
+    Please provide justifications for the decison. DO NOT list out the top5 requirements from job description analysis.
+    Be attention to detail when evaluating the candidate's background to the position, it's ok to focus more on the technical skills.
+    If no relevant input, e.g. Resume or JD is missing, return None and explain the missing content condition.
+    Don't repeat your answer. 
+
+
+assignment_evaluation_task:
+  description: >
+    Load the submitted take-home assignment from {assignment_path} and read thoroughly.
+    Evaluate the candidate's take-home assignment to assess their problem-solving abilities and thought processes.
+  expected_output: >
+    Score the candidate based on their technical, writing and elaboration skills based on the submitted take-home.
+    Write a concise evaluation report of the candidate's take-home assignment, highlighting their solution approach and reasoning.
+    If Take-home assignment is missing, return None and stop.
+  
+
+interview_coordination_task:
+  description: >
+    After gathering required knowledge about the candidate from the resume and take-home assignment, you're ready to make a final call.
+    Write a short summary of your understanding of how good the candidate is fit to the job and provide concise but insightful reasoning to share.
+    When creating list of questions for the qualified candidates whose match score is above threshold. Make sure the questions is relevant to the 
+    candidate's background mentioned in the resume or your follow-up questions based on the assigned take-home.
+    If candidate has diverse background and experience, please focus mostly on the relevant ones to the job position, and the take-home testing focus.
+    Can touch base on general questions related to the job if there is no relevant candidate information to raise specific questions.
+  expected_output: >
+    A short summary of your evaluation process on the candidate's background and take-home performance.
+    Include 3-5 relevant questions that cover various aspects of the technical interview if the candidate is a good match.
+    Focus on topics that recaping the take-home assignment and reflecting candidate's past experience.
+    Provide a appropriate answer for each technical question, as reference for other interview panelist. Be knowledgable and factual.
+    For candidate who is not a good match, simply state the reasons behind and what are lacking.
+    If candidate has unique experience in any aspect, e.g. past working experience or side project, please list them out for other interviewer(s).
+    Return in Markdown format to be stored.
+
+
+# read_email_and_filter_task:
+#   description: >
+#     Analyze a batch of emails and filter out non-essential ones such as promptional, newsletters and notifications.
+
+#     Use your expertise in email content analysis to distinguish important emails from the reset,
+#     pay attention to the sender and avoid invalid emails.
+
+#     EMAILS:
+#     {emails}
+#   expected_output: >
+#     Final answer MUST be a list of relevant content from each sender, use json format and bullet points.

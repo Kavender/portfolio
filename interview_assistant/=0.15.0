@@ -1,0 +1,5 @@
+Collecting python-dotenv
+  Downloading python_dotenv-1.0.1-py3-none-any.whl.metadata (23 kB)
+Downloading python_dotenv-1.0.1-py3-none-any.whl (19 kB)
+Installing collected packages: python-dotenv
+Successfully installed python-dotenv-1.0.1
