@@ -2,11 +2,10 @@ import warnings
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import tool
-from langchain.agents import load_tools
 from tools.doc_reader_tools import read_file
 from utils import activate_llm
 
-warnings.filterwarnings("ignore", message="Error in TokenCalcHandler.on_llm_start callback: KeyError")
+warnings.filterwarnings("ignore")
 
 
 @tool
@@ -21,7 +20,6 @@ class InterviewerAssistantCrew():
     """Crew to help organize the interview process"""
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
-    human_tools = load_tools(["human"])
     llm = activate_llm()
     
     @agent
@@ -30,9 +28,9 @@ class InterviewerAssistantCrew():
                 config=self.agents_config['job_opportunities_parser'],
                 tools=[read_document_tool],
                 memory=True,
-                verbose=False,
+                verbose=True,
                 llm=self.llm,
-                max_iter=3,
+                # max_iter=3,
                 allow_delegation=False
         )
 
@@ -78,7 +76,7 @@ class InterviewerAssistantCrew():
                 memory=True,
                 verbose=False,
                 llm=self.llm,
-                max_iter=3,
+                # max_iter=3,
                 allow_delegation=False
         )
 
@@ -93,11 +91,12 @@ class InterviewerAssistantCrew():
     def job_descrip_analysis(self):
         return Task(config=self.tasks_config["read_job_descrip_task"],
             agent=self.job_descrip_parser(),
+            human_input=True
         )
 
     @task
     def match_resume_to_job_decrip(self):
-        return Task(config=self.tasks_config["read_job_descrip_task"],
+        return Task(config=self.tasks_config["match_and_analyze_candidates_task"],
             agent=self.match_and_scorer(),
         )
     
@@ -112,9 +111,9 @@ class InterviewerAssistantCrew():
     def write_evaluation_report(self):
         return Task(
             config=self.tasks_config["interview_coordination_task"],
-            agent=self.interview_coordinator()
+            agent=self.interview_coordinator(),
+            human_input=True
         )
-    
 
     @crew
     def crew(self) -> Crew:

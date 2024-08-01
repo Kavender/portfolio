@@ -1,9 +1,8 @@
 read_resume_task:
   description: >
-    Load candidate's resume to read thoroughly.
+    Load candidate's resume from {resume_path} and read it thoroughly.
     Extract relevant information from the resume. Focus on skills, experience, education, and key achievements.
     Ensure to capture the candidate's professional summary, technical skills, work history, and educational background.
-    Path to resume: {resume_path}
   expected_output: >
     A structured summary of the resume, including:
     - Professional Summary
@@ -14,10 +13,10 @@ read_resume_task:
   
 read_job_descrip_task:
   description: >
-    Load candidate's job description to analyze thoroughly.
-    Evaluate and match the candidates to the best job positions based on their qualifications and suitability.
+    Load candidate's job description from {job_description_path} and read it thoroughly.
+    Parse it to a list of top requirements to evaluate and match candidate's qualifications and suitability.
     Don't make up result if cannot locate or read the job description from designated path.
-    Path to job description: {job_description_path}
+    Ask the human for feedback, if looks good or confirmed, finish the chain. Otherwise, rewrite the output based on human feedbacks.
   expected_output: >
     Listed top 5 requirements for the best candidates in bullet points.
 
@@ -53,6 +52,9 @@ interview_coordination_task:
     candidate's background mentioned in the resume or your follow-up questions based on the assigned take-home.
     If candidate has diverse background and experience, please focus mostly on the relevant ones to the job position, and the take-home testing focus.
     Can touch base on general questions related to the job if there is no relevant candidate information to raise specific questions.
+    Ask the human for feedback, if looks good or confirmed, finish the chain.
+    Human can offer guidance to modify the draft of questions by asking to generate more on certain topic, select a few or delete some. You should
+    rewrite the questions with those adjustment accordingly.
   expected_output: >
     A short summary of your evaluation process on the candidate's background and take-home performance.
     Include 3-5 relevant questions that cover various aspects of the technical interview if the candidate is a good match.

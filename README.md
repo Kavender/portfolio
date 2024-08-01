@@ -8,8 +8,8 @@ Below is a list of projects included in this portfolio. Each project has its own
 
 1. **Churn Prediction** - Utilizes advanced machine learning techniques to identify customers at high risk of leaving, enabling targeted retention strategies.
 2. **Interview Assistant** - Multi-Agent system built with CrewAI to help evaluate candidate and generate report to facilitate interview process.
-
-
+3. **Web Scraper on Fortune 500 (Legacy Project)** - Build HtmlParser to scrape 2015-2018 fortune 500 basic info with requests and beautifulsoup lib.
+ 
 ## Skills Demonstrated
 
 - Data Cleaning and Preprocessing

@@ -48,7 +48,7 @@ class HtmlParser(object):
         except error.URLError as e:
             if retry_count > 0:
                 if hasattr(e, "code") and 500 <= e.code < 600:
-                    return page_downloader(url, retry_count - 1)
+                    return self.page_downloader(url, retry_count - 1)
         return content
 
 
