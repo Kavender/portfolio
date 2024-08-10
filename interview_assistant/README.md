@@ -4,7 +4,7 @@
     - version: 0.2.0 
     - lastest update: 2024-8
     - snap view
-    ![GitHub Logo](simple_sequential_interview_assistant.png)
+  ![GitHub Logo](simple_sequential_interview_assistant.png)
 
 ## Use Cases 
     **Select Candidate & Generate report** 
