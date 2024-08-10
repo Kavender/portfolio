@@ -3,8 +3,9 @@
     Multi-Agent system built with CrewAI to help automate interview process that used to be human dominated.
     - version: 0.2.0 
     - lastest update: 2024-8
-    - snap view
-  ![GitHub Logo](simple_sequential_interview_assistant.png)
+    - snap on Miro workflow
+<img src="simple_sequential_interview_assistant.png" width="500" height="400" alt="GitHub Logo">
+
 
 ## Use Cases 
     **Select Candidate & Generate report** 
