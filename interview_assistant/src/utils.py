@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv, find_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
+from langchain_groq import ChatGroq
 
                                                                                                            # the format for that file is (without the comment)                                                                                                                                       #API_KEYNAME=AStringThatIsTheLongAPIKeyFromSomeService
 def load_env():
@@ -50,5 +51,8 @@ def activate_llm():
         os.environ["ANTHROPIC_API_KEY"] = get_env_api_key("ANTHROPIC_API_KEY")
         llm = ChatAnthropic(model=get_env_api_key("ANTHROPIC_LLM_MODEL"))
     else:
-        llm = None
+        llm = ChatGroq(
+            api_key=get_env_api_key("GROQ_API_KEY"),
+            model=get_env_api_key("GROQ_LLM_MODEL")
+        )
     return llm
