@@ -8,14 +8,15 @@
 
 
 ## Use Cases 
-    **Select Candidate & Generate report** 
+    
+**Select Candidate & Generate report**
     - `interview_assistant_crew.py`, which helps evaluate candidate and generate report to facilitate interview process.
     - executed with `python src/main.py` after `make sh` into the container
 
 ## Other useful tips
 ### automatic identify dependency file versions
-    Credits from https://stackoverflow.com/questions/32390291/pip-freeze-for-only-project-requirements
     `pip freeze -q -r requirements.txt | sed '/freeze/,$ d' > requirements-froze.txt`
+Credits to https://stackoverflow.com/questions/32390291/pip-freeze-for-only-project-requirements
 
 ### Use Llama3.1model as llm instead of paid service
     Tool calling is newly added feature in llama3.1 model with STOA on multiple benchmarks.
