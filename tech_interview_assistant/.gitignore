@@ -1,0 +1,22 @@
+**/*.pyc
+**/__pycache__
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# macOS display setting files
+.DS_Store
+
+# local documents
+data/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
