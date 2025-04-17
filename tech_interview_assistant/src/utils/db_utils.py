@@ -1,11 +1,7 @@
+import json
 import sqlite3
+from typing import List
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
-# from langchain_community.tools.sql_database.tool import (
-#     InfoSQLDatabaseTool,
-#     ListSQLDatabaseTool,
-#     QuerySQLCheckerTool,
-#     QuerySQLDataBaseTool,
-# )
 from langgraph.prebuilt import create_react_agent
 from langchain_community.utilities.sql_database import SQLDatabase
 
@@ -23,3 +19,25 @@ def build_sql_agent(db, llm, system_message):
         llm, toolkit.get_tools(), state_modifier=system_message
     )
     return agent_executor
+
+
+def fetch_rows_from_sql(db_path: str, table_name: str) -> List[dict]:
+    """
+    Connect to a local SQL db, retrieve 'description' and 'solution' columns.
+    Return a list of dicts with those keys.
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    query = f"SELECT description, solution FROM {table_name}"
+    cursor.execute(query)
+    
+    rows = []
+    for row in cursor.fetchall():
+        desc, sol = row
+        rows.append({
+            "description": desc,
+            "solution": json.load(sol)
+        })
+    
+    conn.close()
+    return rows

@@ -50,11 +50,3 @@ def hash_text_to_digits(text, num_digits):
     large_int = int(hex_dig, 16)
     fixed_digits_int = large_int % (10**num_digits)
     return fixed_digits_int
-
-
-def save_to_csv(df: DataFrame, filename: str) -> None:
-    if path.exists(filename):
-        df.to_csv(filename, mode="a", header=False, index=False)
-    else:
-        df.to_csv(filename, mode="w", header=True, index=False)
-

@@ -1,44 +1,208 @@
-# Tech interview Prep
+# Tech Interview Assistant
 
-Multi-Agent system built with Langchain and LangGraph to assistant candidate in preparing for DS tech interviews.
+A multi-agent system built with LangChain and LangGraph to assist candidates in preparing for data science technical interviews.
 
-## Use Cases
+## Overview and Use Cases
 
-1. **Collecting Candidate Question** - Gather DS interview questions from subscribed newsletter in Gmail.
-2. **Mock Interview Prep** - Under Development.
+The Tech Interview Assistant is designed to help with technical interview preparation by:
 
+1. **Collecting Interview Questions** - Gather data science interview questions from subscribed newsletters in Gmail (e.g., from interviewquery.com)
+2. **Generating Solutions** - Create high-quality solutions using LLM-based solvers with reflection capabilities
+3. **Knowledge Management** - Store questions and solutions in a vector database for semantic search
+4. **Retrieval** - Find similar questions and solutions when needed
+5. **Mock Interview Prep** - Under Development
 
-## Use poetry for version control
-- When encounter `Virtual environment already activated:` error when spin up virtual env with `poetry shell`
-Do the following activation instead:
-`source "$( poetry env list --full-path | grep Activated | cut -d' ' -f1 )/bin/activate"`
-(tech-interview-assistant-py3.11)
- 
-## Requirement for Google Authentification
-Goal: Obtain credential tokens after pass OAuth2.0 outside of Docker 
-- Get OAuth2.0 Credentials from Google Cloud Console
-    https://cloud.google.com/docs/authentication/getting-started
-    or watch this tutorial to walkthrough
-    https://www.youtube.com/watch?v=YdhoXrabVAU&list=PL5xptEJQ3SWDWik9kTJhpz4eZPtGFrTbu&index=2
-- Review and decide on the scope used to generate OAuth token file:
-    https://developers.google.com/gmail/api/auth/scopes
-    Modify the default scopes in `generate_auth_token.py` if necessary.
-- Set up Virutal Environment that can execute Google OAuth2.0  (python3.9+)
-    - cd portfolio/tech_interview_assistant
-    - python3 -m venv virtualenv
-    - source virtualenv/bin/activate
-    - install required libs either using:
-        - pip install --upgrade --quiet  google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
-        - pip install -qU langchain-google-community[gmail]
-    - create temp folder to execute token generation script
-        - mkdir virtualenv/temp_project
-        - cp src/data/credentials/credentials.json virtualenv/temp_project
-        - cp src/services/generate_auth_token.py virtualenv/temp_project
-        - cd virtualenv/temp_project
-        - python generate_auth_token.py
-        - cp virtualenv/temp_project/gmail_token.json src/data/credentials/
-        - once done, deactivate the virtual envs
-- Update the GOOGLE_APP_TOKEN in .env as the generated token file destination
-- Once the token generated is expired, you will be getting the following error:
-    `google.auth.exceptions.RefreshError: ('invalid_grant: Token has been expired or revoked.', {'error': 'invalid_grant', 'error_description': 'Token has been expired or revoked.'})`
-    You can delete the token file and regenerate it again.
+The system uses LangGraph to create a workflow that connects these components.
+
+## Components
+
+- **EmailProcessor**: Extracts questions from emails
+- **SolutionGenerator**: Generates solutions using a LLM-based solver
+- **SolutionReflector**: Reflects on and improves solutions
+- **VectorStoreManager**: Manages the vector database for storing and retrieving solutions
+- **DocumentProcessor**: Processes questions and solutions into documents for vector storage
+- **WebScraper**: Scrapes questions and solutions from web pages
+
+## Installation and Setup
+
+### Environment Setup
+
+1. Fork and clone this repository
+2. Set up a virtual environment using one of these methods:
+   
+   **Option 1: Using Poetry (recommended)**
+   ```bash
+   # Install Poetry if you don't have it
+   pip install poetry
+   
+   # Install dependencies
+   poetry install
+   
+   # Activate the virtual environment
+   poetry shell
+   
+   # If you encounter "Virtual environment already activated" error, use:
+   source "$( poetry env list --full-path | grep Activated | cut -d' ' -f1 )/bin/activate"
+   ```
+   
+   **Option 2: Using pip**
+   ```bash
+   # Create a virtual environment
+   python -m venv venv
+   
+   # Activate the virtual environment
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   
+   # Install dependencies
+   pip install -r requirements.txt
+   ```
+
+### Credentials Setup
+
+1. **API Keys**
+   - Export OpenAI API key: `export OPENAI_API_KEY=your_key_here`
+   - Export Anthropic API key: `export ANTHROPIC_API_KEY=your_key_here`
+   - Export LangSmith API key (optional): `export LANGSMITH_API_KEY=your_key_here`
+
+2. **Google Authentication Setup**
+   - Get OAuth2.0 Credentials from [Google Cloud Console](https://cloud.google.com/docs/authentication/getting-started)
+   - Save your credentials as `credentials.json` in the `src/config/` directory
+   - Set the following environment variables in your `.env` file:
+     ```
+     GOOGLE_APP_CREDENTIALS=./src/config/credentials.json
+     GOOGLE_APP_TOKEN=./src/config/gmail_token.json
+     ```
+   - The authentication token will be generated automatically when you first run the application
+   - If you need to manually generate or refresh the token, you can use the `get_auth_token` function from `src/utils/gmail_utils.py`:
+     ```python
+     from src.utils.gmail_utils import get_auth_token
+     
+     # Generate a new token
+     get_auth_token(
+         credential_file_path="./src/config/credentials.json",
+         token_file_path="./src/config/gmail_token.json"
+     )
+     ```
+   - If the token expires, you'll see an error like: `google.auth.exceptions.RefreshError: ('invalid_grant: Token has been expired or revoked.', {'error': 'invalid_grant', 'error_description': 'Token has been expired or revoked.'})`. The system will automatically attempt to regenerate the token, or you can manually delete the token file and regenerate it.
+   - Make sure grant the same set of scopes on the page `GmailReader wants access to your Google Account`, otherwise token files cannot be re-generated properly.Instead it will raise `Warning: Scope has changed from X to Y`
+
+## Usage
+
+### Command Line Interface
+
+The system includes a command-line interface for easy usage:
+
+```bash
+# Process questions from emails
+./tech_interview_assistant.py process --senders interviewquery.com --limit 5
+
+# Query for similar questions
+./tech_interview_assistant.py query "How would you implement a recommendation system?" --k 3
+
+# Scrape questions from URLs
+./tech_interview_assistant.py scrape "https://www.interviewquery.com/questions/example1" "https://www.interviewquery.com/questions/example2" --batch-size 5
+
+# Store questions from a CSV file in the vector database
+./tech_interview_assistant.py store path/to/questions.csv --batch-size 10
+```
+
+### Python API
+
+```python
+from src.main import TechInterviewAssistant
+
+# Initialize the assistant
+assistant = TechInterviewAssistant()
+
+# Process questions from emails
+result = assistant.process_email_questions(
+    sender_lists=["interviewquery.com"],
+    limit=5
+)
+
+# Retrieve similar questions
+query = "How would you implement a recommendation system for an e-commerce website?"
+similar = assistant.retrieve_similar_questions(query, k=3)
+
+# Run the full workflow
+result = assistant.run_full_workflow(
+    email_collection=True,
+    web_scraping=True,
+    vector_storage=True
+)
+```
+
+## Advanced Features
+### Batch Processing
+
+Process multiple questions at once:
+
+```python
+questions = ["How would you implement a recommendation system?", "Explain the bias-variance tradeoff."]
+results = assistant.process_questions_batch(questions, batch_size=10)
+```
+
+### Hybrid Retrieval
+
+The system uses a hybrid retrieval approach that combines BM25 (keyword-based) and vector search (semantic) for better results:
+
+```python
+hybrid_retriever = assistant.setup_hybrid_retriever(documents, alpha=0.5, k=3)
+similar_docs = hybrid_retriever.get_relevant_documents(query)
+```
+
+## Langraph Studio Compatibility
+
+This project is compatible with Langraph Studio, allowing you to visualize and interact with the workflow graph.
+
+### Setup for Langraph Studio
+
+1. Ensure you have the correct configuration in `langgraph.json`:
+   ```json
+   {
+     "python_version": "3.11",
+     "dependencies": [
+       "."
+     ],
+     "graphs": {
+       "main": "./src/graph/graph.py:graph"
+     },
+     "store": {
+       "index": {
+         "embed": "openai:text-embedding-3-small",
+         "dims": 1536,
+         "api_key": "your_openai_api_key"
+       },
+       "env": ".env"
+     }
+   }
+   ```
+
+2. Open the project in Langraph Studio to visualize and interact with the workflow graph.
+
+## Project Structure
+
+The project has been reorganized for better modularity and compatibility with Langraph Studio:
+
+- `src/graph/graph.py`: Exports the main workflow graph for Langraph Studio
+- `src/main.py`: Contains the TechInterviewAssistant class and CLI functionality
+- `tech_interview_assistant.py`: Main entry point that uses the functionality in src/main.py
+
+## Testing
+
+Run the tests to verify that the system works correctly:
+
+```bash
+./tests/test_tech_interview_assistant.py
+```
+
+## Documentation
+
+For more detailed documentation, see:
+
+- [Tech Interview Workflow](docs/tech_interview_workflow.md): Detailed description of the workflow
+- [Workflow Diagram](docs/workflow_diagram.md): Visual representation of the workflow
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
