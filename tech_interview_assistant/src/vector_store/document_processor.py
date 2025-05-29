@@ -1,9 +1,13 @@
 from typing import List, Dict, Any, Optional
+import logging
 import pandas as pd
 from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
 from src.graph.retrieval import format_example
+from src.utils.logger import default_logger as logger
 
+
+# TODO: is the class really necessary, if not, let's remove the mode and only keep the solution_generator
 class DocumentProcessor:
     """
     Class for processing documents for vector storage.
@@ -77,13 +81,13 @@ class DocumentProcessor:
                 
                 # Generate solution if none exists and generation is enabled
                 if (not solution or len(solution.strip()) == 0) and generate_missing and self.solver:
-                    print(f"Generating solution for question: {row.get('question_abbr', 'Unknown')}")
+                    logger.info(f"Generating solution for question: {row.get('question_abbr', 'Unknown')}")
                     solution_obj = self.generate_solution(question)
                     solution = solution_obj.dict() if hasattr(solution_obj, 'dict') else str(solution_obj)
                 
                 # Skip if still no solution and generation was disabled
                 if not solution or len(solution.strip()) == 0:
-                    print(f"Skipping question without solution: {row.get('question_abbr', 'Unknown')}")
+                    logger.warning(f"Skipping question without solution: {row.get('question_abbr', 'Unknown')}")
                     continue
                 
                 # Format for storage
@@ -101,7 +105,7 @@ class DocumentProcessor:
                 batch_documents.append(document)
             
             all_documents.extend(batch_documents)
-            print(f"Processed batch {i//batch_size + 1}, documents: {len(batch_documents)}")
+            logger.info(f"Processed batch {i//batch_size + 1}, documents: {len(batch_documents)}")
         
         return all_documents
     

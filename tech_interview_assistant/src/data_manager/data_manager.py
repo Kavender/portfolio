@@ -2,7 +2,7 @@ import os
 import sqlite3
 import pandas as pd
 from typing import Dict, Any, Optional, Tuple
-from src.utils.db_utils import initialize_db_connection
+from langchain_community.utilities.sql_database import SQLDatabase
 
 
 class DataManager:
@@ -34,7 +34,6 @@ class DataManager:
         """
         filepath = os.path.join(self.data_dir, filename)
         df.to_csv(filepath, index=index)
-        print(f"Saved {len(df)} rows to {filepath}")
         return filepath
     
     def load_from_csv(self, filename: str, **kwargs) -> pd.DataFrame:
@@ -53,7 +52,6 @@ class DataManager:
             raise FileNotFoundError(f"File not found: {filepath}")
         
         df = pd.read_csv(filepath, **kwargs)
-        print(f"Loaded {len(df)} rows from {filepath}")
         return df
     
     def initialize_db_connection(self, db_name: str) -> Tuple[Any, sqlite3.Connection]:
@@ -72,8 +70,10 @@ class DataManager:
             db_path = os.path.join(self.data_dir, db_name)
         else:
             db_path = db_name
-        
-        return initialize_db_connection(db_path)
+
+        db = SQLDatabase.from_uri(F"sqlite:///{db_path}")
+        conn = sqlite3.connect(db_name)
+        return db, conn
     
     def save_to_db(
         self, 
@@ -91,22 +91,14 @@ class DataManager:
             db_name: Name of the database
             if_exists: What to do if the table exists ('fail', 'replace', or 'append')
         """
-        # If db_name doesn't have a path, add the data directory
         if not os.path.dirname(db_name):
             db_path = os.path.join(self.data_dir, db_name)
         else:
             db_path = db_name
-        
-        # Create connection
+
         conn = sqlite3.connect(db_path)
-        
-        # Save DataFrame to database
         df.to_sql(name=table_name, con=conn, if_exists=if_exists, index=False)
-        
-        # Close connection
         conn.close()
-        
-        print(f"Saved {len(df)} rows to table {table_name} in database {db_path}")
     
     def load_from_db(
         self, 
@@ -125,22 +117,15 @@ class DataManager:
         Returns:
             DataFrame with query results
         """
-        # If db_name doesn't have a path, add the data directory
         if not os.path.dirname(db_name):
             db_path = os.path.join(self.data_dir, db_name)
         else:
             db_path = db_name
         
-        # Create connection
         conn = sqlite3.connect(db_path)
-        
-        # Execute query
+
         df = pd.read_sql_query(query, conn, params=params)
-        
-        # Close connection
         conn.close()
-        
-        print(f"Loaded {len(df)} rows from database {db_path}")
         return df
     
     def file_exists(self, filename: str) -> bool:

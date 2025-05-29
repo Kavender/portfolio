@@ -1,8 +1,9 @@
 from typing import Dict, Any, Optional, List, Union
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 from src.graph.workflow_manager import WorkflowManager
 from src.solution_generator.reflector import SolutionReflector
 from src.solution_generator.validators import SolutionValidator
+
 
 class SolutionGenerator:
     """
@@ -28,8 +29,12 @@ class SolutionGenerator:
         self.workflow_manager = workflow_manager or WorkflowManager()
         # Get the compiled graph from the workflow manager
         self.graph = self.workflow_manager.return_graph()
-        # Keep self.solver for backward compatibility, but we won't use it directly
-        self.solver = self.graph.nodes["solve"]
+
+        try:
+            self.solver = self.graph.nodes["coding_solver"]
+        except KeyError:
+            self.solver = None
+        
         self.llm = llm or self.workflow_manager.llm
         assert self.llm is not None
         # Initialize reflector if reflection is enabled
@@ -69,18 +74,14 @@ class SolutionGenerator:
         Returns:
             Generated solution
         """
-        # Create state with messages containing the question
         state = {"messages": [HumanMessage(content=question)]}
         
-        # Add examples if provided
         if examples:
             state["examples"] = examples
         
         # Use the compiled graph to generate solution
-        # This will run through the entire workflow: draft -> retrieve -> solve -> evaluate
         solution = self.graph.invoke(state)
-        
-        # Apply reflection if enabled
+
         should_reflect = self.use_reflection if apply_reflection is None else apply_reflection
         if should_reflect:
             return self._refine_solution(question, solution)
@@ -98,14 +99,14 @@ class SolutionGenerator:
         Returns:
             Refined solution
         """
-        # Extract the solution content
         if "candidate" not in solution:
             return solution
             
         candidate = solution["candidate"]
         if isinstance(candidate, dict):
-            # If it has a codebase, extract the relevant parts
-            if "codebase" in candidate:
+            solution_type = candidate.get("solution_type", "coding")
+            
+            if solution_type == "coding" and "codebase" in candidate:
                 codebase = candidate["codebase"]
                 solution_text = (
                     f"Reasoning: {codebase.get('reasoning', '')}\n\n"
@@ -114,14 +115,21 @@ class SolutionGenerator:
                 )
                 if "tests" in codebase and codebase["tests"]:
                     solution_text += f"Tests:\n{codebase['tests']}\n\n"
+            elif solution_type == "conceptual" and "conceptual" in candidate:
+                conceptual = candidate["conceptual"]
+                solution_text = (
+                    f"Explanation: {conceptual.get('explanation', '')}\n\n"
+                    f"Key Points: {conceptual.get('key_points', [])}\n\n"
+                )
+                if "examples" in conceptual and conceptual["examples"]:
+                    solution_text += f"Examples:\n{conceptual['examples']}\n\n"
+                if "visualization_code" in conceptual and conceptual["visualization_code"]:
+                    solution_text += f"Visualization Code:\n{conceptual['visualization_code']}\n\n"
             else:
-                # Otherwise, convert the whole dictionary to a string
                 solution_text = str(candidate)
         else:
-            # If it's already a string, use it directly
             solution_text = str(candidate)
         
-        # Apply reflection and error detection
         improved_text = self.reflector.reflect_and_improve(
             question, 
             solution_text,
@@ -130,8 +138,33 @@ class SolutionGenerator:
         
         corrected_text = self.reflector.detect_and_fix_errors(question, improved_text)
         
-        # Update the solution with the improved text
-        solution["candidate"] = corrected_text
+        if isinstance(corrected_text, dict):
+            solution["candidate"] = corrected_text
+        else:
+            if "def " in corrected_text or "class " in corrected_text:
+                solution["candidate"] = {
+                    "solution_type": "coding",
+                    "codebase": {
+                        "reasoning": "Extracted from reflection process",
+                        "pseudocode": "Extracted from reflection process",
+                        "code": corrected_text,
+                        "tests": "# Tests included in the solution"
+                    },
+                    "report": {
+                        "model_or_algorithm": "Algorithm extracted from reflection"
+                    }
+                }
+            else:
+                solution["candidate"] = {
+                    "solution_type": "conceptual",
+                    "conceptual": {
+                        "explanation": corrected_text,
+                        "key_points": ["Key point extracted from reflection"]
+                    },
+                    "report": {
+                        "model_or_algorithm": "Concept explained in reflection"
+                    }
+                }
         
         return solution
     
@@ -161,6 +194,19 @@ class SolutionGenerator:
         Returns:
             True if the solution is valid, False otherwise
         """
+        if isinstance(solution, dict) and "candidate" in solution:
+            candidate = solution["candidate"]
+            
+            if isinstance(candidate, dict):
+                solution_type = candidate.get("solution_type", "coding")
+                
+                if solution_type == "coding" and "codebase" in candidate:
+                    codebase = candidate["codebase"]
+                    return "code" in codebase and bool(codebase["code"])
+                elif solution_type == "conceptual" and "conceptual" in candidate:
+                    conceptual = candidate["conceptual"]
+                    return "explanation" in conceptual and bool(conceptual["explanation"])
+
         return SolutionValidator.has_code(solution)
     
     def run_full_workflow(self, question: str) -> Dict[str, Any]:
@@ -186,20 +232,23 @@ class SolutionGenerator:
         Returns:
             Extracted code or None if no code is found
         """
-        # Check if the solution has a candidate
         if "candidate" not in solution:
             return None
             
         candidate = solution["candidate"]
         
-        # If the candidate is a dictionary with a codebase
-        if isinstance(candidate, dict) and "codebase" in candidate:
-            codebase = candidate["codebase"]
-            # Return the code if it exists
-            if "code" in codebase and codebase["code"]:
-                return codebase["code"]
+        if isinstance(candidate, dict):
+            solution_type = candidate.get("solution_type", "coding")
+            
+            if solution_type == "coding" and "codebase" in candidate:
+                codebase = candidate["codebase"]
+                if "code" in codebase and codebase["code"]:
+                    return codebase["code"]
+            elif solution_type == "conceptual" and "conceptual" in candidate:
+                conceptual = candidate["conceptual"]
+                if "visualization_code" in conceptual and conceptual["visualization_code"]:
+                    return conceptual["visualization_code"]
         
-        # If the candidate is a string, try to extract code blocks
         if isinstance(candidate, str):
             code_blocks = SolutionValidator.extract_code_blocks(candidate)
             if code_blocks:

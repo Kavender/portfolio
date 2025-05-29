@@ -1,5 +1,5 @@
-import time
 from typing import List, Tuple
+import time
 from selenium import webdriver
 from src.utils.utils import (
     batch,
@@ -7,7 +7,9 @@ from src.utils.utils import (
     extract_question_from_url, 
     hash_text_to_digits
 )
+from src.utils.logger import default_logger as logger
 from src.utils.retrieval_utils import login_to_interview_query, extract_content_from_tab
+
 
 class WebScraper:
     """
@@ -96,7 +98,7 @@ class WebScraper:
             
             # Extract question abbreviation from URL
             question_abbr = extract_question_from_url(link)
-            print(f"Navigating to page: {link}")
+            logger.info(f"Navigating to page: {link}")
             
             # Generate hash ID
             hash_id = hash_text_to_digits(question_abbr, num_digits=4)
@@ -111,11 +113,10 @@ class WebScraper:
             # Check if solution is placeholder
             if self.is_placeholder_content(solution_content):
                 solution_content = ""
-                self.login()  # Re-login if needed
+                self.login()
             
-            print("Question Content:", question_content[:100] + "..." if len(question_content) > 100 else question_content)
-            print("Solution Content:", solution_content[:100] + "..." if len(solution_content) > 100 else solution_content)
-            print("-----")
+            logger.info("Question Content:", question_content[:100] + "..." if len(question_content) > 100 else question_content)
+            logger.info("Solution Content:", solution_content[:100] + "..." if len(solution_content) > 100 else solution_content)
             
             # Add delay to avoid rate limiting
             time.sleep(5)
@@ -123,7 +124,7 @@ class WebScraper:
             return hash_id, link, question_abbr, question_content, solution_content
             
         except Exception as e:
-            print(f"{link} is unavailable to extract: {e}")
+            logger.error(f"{link} is unavailable to extract: {e}")
             return "", link, "", "", ""
     
     def extract_qa_batch(

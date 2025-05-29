@@ -1,13 +1,8 @@
-from typing_extensions import TypedDict
 from typing import Annotated, List, Optional
+from typing_extensions import TypedDict
+from pydantic import BaseModel, Field
 from langgraph.graph import add_messages
 from langchain_core.messages import AIMessage, AnyMessage
-from pydantic import BaseModel, Field
-
-
-class ConfigSchema(TypedDict):
-    db_id: int
-    model: str
 
 
 class Ignore(BaseModel):
@@ -32,17 +27,30 @@ class State(TypedDict):
     candidate: AIMessage
     examples: str
     status: str
+    question_type: Optional[str]
 
 
 class PythonGenerator(BaseModel):
     """Python-based solution for data science technical questions."""
 
-    reasoning: str = Field(description="High-level conceptual solution.")
-    pseudocode: str = Field(description="Step-by-step outline of the approach in plain English.")
+    reasoning: Optional[str] = Field(description="High-level conceptual solution.")
+    pseudocode: Optional[str] = Field(description="Step-by-step outline of the approach in plain English.")
     code: str = Field(description="Valid Python 3 solution to the problem.", pattern=r"(def |class |import |from )")
     tests: Optional[str] = Field(
         default="",  # Add a default empty string
         description="Established test cases or demonstration code to verify correctness of coding solution."
+    )
+
+
+class ConceptualSolution(BaseModel):
+    """Solution model for conceptual questions."""
+    
+    explanation: str = Field(description="Comprehensive explanation of the concept.")
+    key_points: List[str] = Field(description="Key points or takeaways about the concept.")
+    examples: Optional[str] = Field(None, description="Real-world examples illustrating the concept.")
+    visualization_code: Optional[str] = Field(
+        None, 
+        description="Optional Python code to visualize or demonstrate the concept."
     )
 
 
@@ -74,9 +82,13 @@ class SolutionReport(BaseModel):
 
 class FullSolution(BaseModel):
     """
-    A combined model capturing both coding solution and extended explaination as report.
+    A combined model capturing both coding and conceptual solutions.
     """
-    codebase: PythonGenerator
+    solution_type: str = Field(
+        description="Type of solution: 'coding' or 'conceptual'"
+    )
+    codebase: Optional[PythonGenerator] = None
+    conceptual: Optional[ConceptualSolution] = None
     report: Optional[SolutionReport] = Field(
         default_factory=lambda: SolutionReport(
             data_preprocessing=None,

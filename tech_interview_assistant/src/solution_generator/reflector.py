@@ -1,22 +1,22 @@
+from typing import Optional
 import re
+import ast
 import json
 from pydantic import BaseModel, Field
-from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
-from langchain_core.outputs import Generation
-from langchain_core.exceptions import OutputParserException
-from langchain.prompts.chat import (
-    ChatPromptTemplate,
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-)
+from langchain.prompts.chat import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from src.utils.parser_utils import CustomPydanticOutputParser
+from src.utils.logger import default_logger as logger
 
 
 class Feedback(BaseModel):
     """
     Feedback model for solution evaluation.
     """
-    conclusion: bool = Field(description="Decide whether the question is correctly answered by the solution")
-    solution: str = Field(description="The updated solution if improvements are needed")
+    solution_type: str = Field(description="Type of solution: 'coding' or 'conceptual'")
+    codebase: Optional[dict] = Field(default=None, description="Codebase details for coding solutions")
+    conceptual: Optional[dict] = Field(default=None, description="Conceptual details for conceptual solutions")
+    report: Optional[dict] = Field(default_factory=dict, description="Report with additional insights")
     
     class Config:
         arbitrary_types_allowed = True
@@ -38,50 +38,6 @@ class ErrorResponse(BaseModel):
     
     class Config:
         arbitrary_types_allowed = True
-
-
-class CustomPydanticOutputParser(PydanticOutputParser):
-    """
-    Custom parser for handling various LLM output formats.
-    """
-    
-    def parse_result(self, result):
-        """
-        Parse the result from the LLM.
-        
-        Args:
-            result: Result from the LLM
-            
-        Returns:
-            Parsed result
-        """
-        text = result[0].text
-        text = text.replace("```", "")
-        text = text.replace("json", "")
-        text = text.replace("python", "")
-        text = text.strip()
-
-        if text.lower().startswith("null"):
-            return None
-            
-        json_pattern = re.compile(r'(\{.*?\})(?=\*\*\*|$)', re.DOTALL)
-        match = json_pattern.search(text)
-        if not match:
-            raise ValueError(f"No JSON object found in the input text: {text}")
-            
-        text = match.group(1)
-        text = re.sub(r'\\([^"\\/bfnrt])', r'\\\\\1', text)
-
-        try:
-            return super().parse_result([Generation(text=text)])
-        except Exception as exc:
-            try:
-                data = json.loads(text)
-                return self.pydantic_object.parse_obj(data)
-            except Exception as e:
-                raise OutputParserException(
-                    f"Failed to parse output: {str(e)}", llm_output=result
-                ) from e
 
 
 class SolutionReflector:
@@ -124,36 +80,31 @@ class SolutionReflector:
         """
         parser = CustomPydanticOutputParser(pydantic_object=Feedback)
         
-        reflection_prompt = (
-            """
-            Evaluate the provided solution according to the following criteria:
-            1. **Clarity:** Is the solution clear and easy to understand?
-            2. **Technical Accuracy:** Is the solution technically accurate and correct?
-            3. **Completeness:** Does the solution cover all relevant aspects of the question?
-            """
-            + "{format_instructions}"
-        )
-        
-        input_prompt = """
-        Compare against each criterion before coming up with an improved version of the solution.
-        <<<
+        system_message = """
+        You are an expert code reviewer. Evaluate the provided solution according to these criteria:
+        1. Clarity: Is the solution clear and easy to understand?
+        2. Technical Accuracy: Is the solution technically accurate and correct?
+        3. Completeness: Does the solution cover all relevant aspects of the question?
+
+        Your response must be a valid JSON object with the following structure:
+        - solution_type: "coding" or "conceptual"
+        - codebase: (for coding solutions) containing reasoning, pseudocode, code, and tests
+        - conceptual: (for conceptual solutions) containing explanation, key_points, examples
+        - report: containing insights about the solution
+
+        Use double quotes for all property names and string values.
+        """
+
+        human_message = """
         Question: {question}
         Solution: {solution}
-        >>>
+
+        Provide your evaluation in JSON format.
         """
-        
-        system_message_prompt = SystemMessagePromptTemplate.from_template(
-            reflection_prompt, 
-            partial_variables={"format_instructions": parser.get_format_instructions()}
-        )
-        
-        human_message_prompt = HumanMessagePromptTemplate.from_template(input_prompt)
-        
         chat_prompt = ChatPromptTemplate.from_messages([
-            system_message_prompt, 
-            human_message_prompt
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": human_message}
         ])
-        
         return chat_prompt | self.llm | parser
     
     def _create_error_detection_chain(self):
@@ -164,23 +115,30 @@ class SolutionReflector:
             Error detection chain
         """
         parser = CustomPydanticOutputParser(pydantic_object=ErrorResponse)
-        
-        error_detection_prompt = ChatPromptTemplate.from_template(
-            """
-            Carefully examine the following solution and identify any factual errors, 
-            logical inconsistencies, or missing key details.
-            If any errors are found, suggest a correction.
 
-            Question: {question}
-            Solution: {solution}
+        system_message = """
+        You are an expert code reviewer. Examine the solution and identify any errors or issues.
 
-            Return the error analysis in the following format.
-            {format_instructions}
-            """,
-            partial_variables={"format_instructions": parser.get_format_instructions()}
-        )
-        
-        return error_detection_prompt | self.llm | parser
+        Your response must be a valid JSON object with the following structure:
+        - error_category: Type of error found, or "no error" if none
+        - solution: The updated solution with corrections, or the original if no errors
+
+        Use double quotes for all property names and string values.
+        """
+
+        human_message = """
+        Question: {question}
+        Solution: {solution}
+
+        Provide your error analysis in JSON format.
+        """
+
+        chat_prompt = ChatPromptTemplate.from_messages([
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": human_message}
+        ])
+
+        return chat_prompt | self.llm | parser
     
     def classify_question(self, question: str) -> str:
         """
@@ -195,9 +153,9 @@ class SolutionReflector:
         return self.classification_chain.invoke({"question": question}).strip()
     
     def reflect_and_improve(
-        self, 
-        question: str, 
-        solution: str, 
+        self,
+        question: str,
+        solution: str,
         max_reflection_passes: int = 3
     ) -> str:
         """
@@ -211,25 +169,100 @@ class SolutionReflector:
         Returns:
             Improved solution
         """
-        improved_solution = solution
+        try:
+            if isinstance(solution, str):
+                try:
+                    if solution.strip().startswith('{') and solution.strip().endswith('}'):
+                        json_compatible = re.sub(r"'([^']*)'", r'"\1"', solution)
+                        current_solution = json.loads(json_compatible)
+                    else:
+                        current_solution = ast.literal_eval(solution)
+                except:
+                    parser = CustomPydanticOutputParser(pydantic_object=Feedback)
+                    text = parser._normalize_to_json(solution)
+                    current_solution = parser._robust_json_parse(text)
+
+                    if current_solution is None:
+                        raise ValueError("Could not parse solution")
+            else:
+                current_solution = solution
+        except:
+            current_solution = {
+                "solution_type": "coding",
+                "codebase": {
+                    "code": solution,
+                    "reasoning": "",
+                    "pseudocode": "",
+                    "tests": ""
+                },
+                "report": {}
+            }
         
-        for _ in range(max_reflection_passes):
-            try:
-                rubric_feedback = self.rubric_chain.invoke({
-                    "question": question, 
-                    "solution": improved_solution
-                })
+        try:
+            if isinstance(current_solution, dict):
+                solution_str = json.dumps(current_solution)
+            else:
+                solution_str = str(current_solution)
+
+            from langchain_core.messages import HumanMessage, SystemMessage
+            
+            system_prompt = """
+            You are an expert code reviewer. Evaluate the provided solution according to these criteria:
+            1. Clarity: Is the solution clear and easy to understand?
+            2. Technical Accuracy: Is the solution technically accurate and correct?
+            3. Completeness: Does the solution cover all relevant aspects of the question?
+
+            Your response must be a valid JSON object with the following structure:
+            {
+              "solution_type": "coding or conceptual",
+              "codebase": {
+                "reasoning": "explanation of approach",
+                "pseudocode": "high-level algorithm",
+                "code": "actual code implementation",
+                "tests": "test cases"
+              },
+              "report": {
+                "model_or_algorithm": "description of algorithm used"
+              }
+            }
+            """
+            
+            human_prompt = f"""
+            Question: {question}
+            Solution: {solution_str}
+
+            Provide your evaluation in JSON format.
+            """
+            
+            messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=human_prompt)
+            ]
+
+            raw_result = self.llm.invoke(messages)
+            content = raw_result.content
+            json_pattern = re.compile(r'(\{(?:[^{}]|(?:\{[^{}]*\}))*\})', re.DOTALL)
+            match = json_pattern.search(content)
+            
+            if match:
+                json_str = match.group(1)
                 
-                if rubric_feedback.conclusion:
-                    break
+                try:
+                    parsed_json = json.loads(json_str)
+                    current_solution = parsed_json
+                except json.JSONDecodeError:
+                    parser = CustomPydanticOutputParser(pydantic_object=Feedback)
+                    normalized_json = parser._normalize_to_json(json_str)
+                    parsed_json = parser._robust_json_parse(normalized_json)
                     
-                improved_solution = rubric_feedback.solution
-                
-            except Exception as e:
-                print(f"Error during reflection: {str(e)}")
-                break
+                    if parsed_json:
+                        current_solution = parsed_json
+            
+        except Exception as e:
+            logger.error(f"Error during reflection: {str(e)}")
+            pass
         
-        return improved_solution
+        return current_solution
     
     def detect_and_fix_errors(self, question: str, solution: str) -> str:
         """
@@ -243,16 +276,63 @@ class SolutionReflector:
             Corrected solution
         """
         try:
-            error_feedback = self.error_chain.invoke({
-                "question": question, 
-                "solution": solution
-            })
+            if isinstance(solution, dict):
+                solution_str = json.dumps(solution)
+            else:
+                solution_str = str(solution)
             
-            if error_feedback.error_category.lower() == "no error":
-                return solution
-                
-            return error_feedback.solution
+            from langchain_core.messages import HumanMessage, SystemMessage
+            
+            system_prompt = """
+            You are an expert code reviewer. Examine the solution and identify any errors or issues.
+
+            Your response must be a valid JSON object with the following structure:
+            {
+              "error_category": "Type of error found, or 'no error' if none",
+              "solution": "The updated solution with corrections, or the original if no errors"
+            }
+
+            Use double quotes for all property names and string values.
+            """
+            
+            human_prompt = f"""
+            Question: {question}
+            Solution: {solution_str}
+
+            Provide your error analysis in JSON format.
+            """
+            
+            messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=human_prompt)
+            ]
+            
+            raw_result = self.llm.invoke(messages)
+            content = raw_result.content
+            json_pattern = re.compile(r'(\{(?:[^{}]|(?:\{[^{}]*\}))*\})', re.DOTALL)
+            match = json_pattern.search(content)
+            
+            if match:
+                json_str = match.group(1)
+                try:
+                    parsed_json = json.loads(json_str)   
+                    if parsed_json.get("error_category", "").lower() == "no error":
+                        return solution
+                    return parsed_json.get("solution", solution)
+                    
+                except json.JSONDecodeError:
+                    parser = CustomPydanticOutputParser(pydantic_object=ErrorResponse)
+                    normalized_json = parser._normalize_to_json(json_str)
+                    parsed_json = parser._robust_json_parse(normalized_json)
+                    
+                    if parsed_json:
+                        if parsed_json.get("error_category", "").lower() == "no error":
+                            return solution
+                        
+                        return parsed_json.get("solution", solution)
+    
+            return solution
             
         except Exception as e:
-            print(f"Error during error detection: {str(e)}")
+            logger.error(f"Error during error detection: {str(e)}")
             return solution

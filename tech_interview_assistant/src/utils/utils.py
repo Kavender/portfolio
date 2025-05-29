@@ -1,7 +1,5 @@
 import re
 import hashlib
-from os import path
-from pandas import DataFrame
 from itertools import islice
 from datetime import datetime
 from urllib.parse import urlparse

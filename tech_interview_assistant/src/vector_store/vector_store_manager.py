@@ -1,10 +1,11 @@
-import os
 from typing import List
+import os
 import chromadb
 from langchain_core.documents import Document
 from langchain_chroma import Chroma
 from langchain_community.retrievers import BM25Retriever
 from src.graph.retrieval import HybridRetriever
+
 
 class VectorStoreManager:
     """
@@ -34,13 +35,16 @@ class VectorStoreManager:
         os.makedirs(self.persist_directory, exist_ok=True)
         
         # Initialize with direct client creation to avoid deprecated configuration
-        client = chromadb.PersistentClient(path=self.persist_directory)
+        # Disable telemetry to avoid connection errors
+        client = chromadb.PersistentClient(
+            path=self.persist_directory,
+            settings=chromadb.Settings(anonymized_telemetry=False)
+        )
         
         # Create or get the collection
         try:
             collection = client.get_or_create_collection(name="tech_interview_qa")
         except Exception as e:
-            print(f"Error creating collection: {e}")
             # If there's an error, try to get the collection directly
             collection = client.get_collection(name="tech_interview_qa")
         
@@ -59,7 +63,7 @@ class VectorStoreManager:
             documents: List of documents to add
         """
         self.vector_store.add_documents(documents)
-        self.vector_store.persist()
+        # self.vector_store.persist()
     
     def setup_hybrid_retriever(self, documents: List[Document], alpha: float = 0.5, k: int = 3) -> HybridRetriever:
         """
@@ -131,3 +135,33 @@ class VectorStoreManager:
             "count": self.vector_store._collection.count(),
             "persist_directory": self.persist_directory
         }
+    
+    def get_all_documents(self) -> List[Document]:
+        """
+        Retrieve all documents stored in the vector store.
+        
+        Returns:
+            List of all documents in the vector store
+        """
+        # Get all documents from the collection
+        collection_data = self.vector_store._collection.get()
+        
+        # Convert to LangChain Document objects
+        documents = []
+        
+        # Check if there are any documents in the collection
+        if collection_data["ids"] and len(collection_data["ids"]) > 0:
+            for i in range(len(collection_data["ids"])):
+                # Extract document data
+                doc_id = collection_data["ids"][i]
+                metadata = collection_data["metadatas"][i] if collection_data["metadatas"] else {}
+                content = collection_data["documents"][i] if collection_data["documents"] else ""
+                
+                # Create Document object
+                doc = Document(
+                    page_content=content,
+                    metadata=metadata
+                )
+                documents.append(doc)
+        
+        return documents

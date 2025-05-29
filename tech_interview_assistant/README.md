@@ -10,18 +10,40 @@ The Tech Interview Assistant is designed to help with technical interview prepar
 2. **Generating Solutions** - Create high-quality solutions using LLM-based solvers with reflection capabilities
 3. **Knowledge Management** - Store questions and solutions in a vector database for semantic search
 4. **Retrieval** - Find similar questions and solutions when needed
-5. **Mock Interview Prep** - Under Development
+5. **Question Classification** - Automatically classify questions as coding or conceptual
+6. **Mock Interview Prep** - Under Development
 
-The system uses LangGraph to create a workflow that connects these components.
+The system uses LangGraph to create a sophisticated workflow that connects these components.
 
 ## Components
 
+### Core Components
+
 - **EmailProcessor**: Extracts questions from emails
+- **WorkflowManager**: Orchestrates the solution generation process with specialized solvers
 - **SolutionGenerator**: Generates solutions using a LLM-based solver
 - **SolutionReflector**: Reflects on and improves solutions
 - **VectorStoreManager**: Manages the vector database for storing and retrieving solutions
 - **DocumentProcessor**: Processes questions and solutions into documents for vector storage
 - **WebScraper**: Scrapes questions and solutions from web pages
+- **JobTracker**: Tracks job runs and metrics for monitoring and incremental processing
+
+### Service Modules
+
+The system uses a service-oriented architecture:
+
+- **EmailService**: Handles email collection and processing functionality
+- **QuestionProcessingService**: Handles question processing and solution generation
+- **VectorStoreService**: Handles vector database operations
+- **DataService**: Handles data management functionality
+- **JobTrackingService**: Handles job tracking and metrics
+
+### Jobs Directory
+
+The system now includes a dedicated jobs directory for job-related functionality:
+
+- **main_agentic_flow.py**: Implements the main workflow as a class
+- **run_incremental_update.py**: Handles incremental updates with enhanced error handling
 
 ## Installation and Setup
 
@@ -104,12 +126,38 @@ The system includes a command-line interface for easy usage:
 
 # Store questions from a CSV file in the vector database
 ./tech_interview_assistant.py store path/to/questions.csv --batch-size 10
+
+# Run incremental update to process new emails
+./tech_interview_assistant.py incremental --default-days 7 --email-limit 100
 ```
+
+### Incremental Updates
+
+The system supports incremental updates to process new emails since the last run:
+
+```bash
+# Run incremental update with default settings
+python -m src.jobs.run_incremental_update
+
+# Run with custom settings
+python -m src.jobs.run_incremental_update --sender-lists interviewquery.com --default-days 7 --email-limit 50
+
+# Force collection of emails regardless of last run timestamp
+python -m src.jobs.run_incremental_update --force-collection --default-days 7
+
+# Skip vector storage but generate solutions
+python -m src.jobs.run_incremental_update --default-days 7 --force-collection --skip-vector-storage
+
+# Set timeout for API requests
+python -m src.jobs.run_incremental_update --default-days 7 --timeout 1200
+```
+
+For more details on the incremental update script, see [Scripts README](scripts/README.md).
 
 ### Python API
 
 ```python
-from src.main import TechInterviewAssistant
+from src.jobs.main_agentic_flow import TechInterviewAssistant
 
 # Initialize the assistant
 assistant = TechInterviewAssistant()
@@ -133,6 +181,71 @@ result = assistant.run_full_workflow(
 ```
 
 ## Advanced Features
+
+### Question Classification
+
+The system now automatically classifies questions as either "coding" or "conceptual" and uses specialized solvers for each type:
+
+```python
+from src.graph.workflow_manager import WorkflowManager
+
+# Initialize the workflow manager
+workflow_manager = WorkflowManager()
+
+# Create the workflow
+workflow = workflow_manager.create_workflow()
+
+# Get the compiled graph
+graph = workflow_manager.return_graph(show_workflow=True)
+
+# Invoke the workflow with a question
+result = graph.invoke({
+    "messages": [HumanMessage(content="How would you implement a recommendation system?")]
+})
+```
+
+### Multi-Question Processing
+
+Process multiple questions in sequence with state management:
+
+```python
+# Process a batch of questions
+result = assistant.process_email_questions(
+    sender_lists=["interviewquery.com"],
+    limit=10
+)
+```
+
+The system will:
+1. Extract questions from emails
+2. Process each question in sequence
+3. Maintain state between questions
+4. Track progress through the batch
+
+### Circuit Breaker Pattern
+
+The system uses circuit breakers for critical components to prevent cascading failures:
+
+```python
+# Create a circuit breaker
+email_circuit_breaker = CircuitBreaker(failure_threshold=3, reset_timeout=300)
+
+# Check if operation can be executed
+if email_circuit_breaker.can_execute():
+    try:
+        # Perform operation
+        result = perform_operation()
+        
+        # Record success
+        email_circuit_breaker.record_success()
+    except Exception as e:
+        # Record failure
+        email_circuit_breaker.record_failure()
+        
+        # Handle error
+        handle_error(e)
+```
+
 ### Batch Processing
 
 Process multiple questions at once:
@@ -161,11 +274,9 @@ This project is compatible with Langraph Studio, allowing you to visualize and i
    ```json
    {
      "python_version": "3.11",
-     "dependencies": [
-       "."
-     ],
+     "dependencies": ["."],
      "graphs": {
-       "main": "./src/graph/graph.py:graph"
+       "main": "./src/graph/workflow_manager.py:WorkflowManager.return_graph"
      },
      "store": {
        "index": {
@@ -182,11 +293,25 @@ This project is compatible with Langraph Studio, allowing you to visualize and i
 
 ## Project Structure
 
-The project has been reorganized for better modularity and compatibility with Langraph Studio:
+The project has been reorganized for better modularity:
 
-- `src/graph/graph.py`: Exports the main workflow graph for Langraph Studio
-- `src/main.py`: Contains the TechInterviewAssistant class and CLI functionality
-- `tech_interview_assistant.py`: Main entry point that uses the functionality in src/main.py
+- `src/`: Main source code directory
+  - `services/`: Service modules that provide core functionality
+  - `email_processor/`: Email processing components
+  - `graph/`: LangGraph workflow definitions
+    - `workflow_manager.py`: Manages the solution generation workflow
+    - `retrieval.py`: Handles retrieval of similar examples
+    - `solver.py`: Specialized solvers for different question types
+  - `jobs/`: Job-related functionality
+    - `main_agentic_flow.py`: Main workflow implementation
+    - `run_incremental_update.py`: Incremental update script
+  - `solution_generator/`: Solution generation components
+  - `vector_store/`: Vector database components
+  - `web_scraper/`: Web scraping components
+  - `utils/`: Utility functions and helpers
+  - `main.py`: Main entry point for the application
+- `scripts/`: Utility scripts
+- `tech_interview_assistant.py`: CLI entry point
 
 ## Testing
 

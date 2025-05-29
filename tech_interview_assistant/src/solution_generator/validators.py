@@ -17,16 +17,13 @@ class SolutionValidator:
         Returns:
             True if the solution contains code, False otherwise
         """
-        # Check if the solution has a candidate
         if "candidate" not in solution:
             return False
         
         candidate = solution["candidate"]
         
-        # Check if the candidate is a dictionary with a codebase
         if isinstance(candidate, dict) and "codebase" in candidate:
             codebase = candidate["codebase"]
-            # Check if the codebase has code
             if "code" in codebase and codebase["code"]:
                 return True
         
@@ -64,25 +61,21 @@ class SolutionValidator:
         
         # If no markdown blocks found, try to extract Python-like code
         if not markdown_blocks:
-            # Look for indented blocks that look like Python code
             python_blocks = []
             lines = text.split('\n')
             current_block = []
             in_block = False
             
             for line in lines:
-                # Check if line looks like Python code
                 if re.match(r'^\s*(def|class|import|from|if|for|while|return|print|#)', line):
                     in_block = True
                     current_block.append(line)
                 elif in_block and line.strip() == '':
-                    # Empty line might end a block
                     if current_block:
                         python_blocks.append('\n'.join(current_block))
                         current_block = []
                     in_block = False
                 elif in_block and line.strip():
-                    # Non-empty line in a block
                     current_block.append(line)
             
             # Add the last block if there is one
@@ -105,7 +98,6 @@ class SolutionValidator:
             Tuple of (is_valid, error_message)
         """
         try:
-            # Try to compile the code
             compile(code, '<string>', 'exec')
             return True, None
         except SyntaxError as e:
@@ -126,21 +118,18 @@ class SolutionValidator:
         """
         missing_components = []
         
-        # Check if the solution has a candidate
         if "candidate" not in solution:
             missing_components.append("candidate")
             return False, missing_components
         
         candidate = solution["candidate"]
         
-        # Check if the candidate is a dictionary with required components
         if isinstance(candidate, dict):
             required_components = ["codebase"]
             for component in required_components:
                 if component not in candidate:
                     missing_components.append(component)
-            
-            # Check codebase components if present
+
             if "codebase" in candidate:
                 codebase = candidate["codebase"]
                 required_codebase_components = ["reasoning", "pseudocode", "code"]
