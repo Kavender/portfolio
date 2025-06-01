@@ -7,8 +7,8 @@ from langchain_core.retrievers import BaseRetriever
 from langchain_community.retrievers import BM25Retriever
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import AIMessage
-from src.graph.schemas import FullSolution, State
-from src.utils.logger import default_logger as logger
+from graph.schemas import FullSolution, State
+from utils.logger import default_logger as logger
 
 
 class HybridRetriever(BaseRetriever):

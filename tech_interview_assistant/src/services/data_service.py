@@ -1,9 +1,9 @@
 from typing import List, Optional
 import pandas as pd
-from src.data_manager.job_tracker import JobTracker
-from src.data_manager.data_manager import DataManager
-from src.utils.logger import get_logger
-from src.utils.web_scraper import WebScraper
+from data_manager.job_tracker import JobTracker
+from data_manager.data_manager import DataManager
+from utils.logger import get_logger
+from utils.web_scraper import WebScraper
 
 
 class DataService:

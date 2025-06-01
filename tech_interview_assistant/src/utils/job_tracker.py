@@ -1,7 +1,7 @@
 from typing import Dict, Any, List, Optional
 import time
 from datetime import datetime, timedelta
-from src.data_manager.db_manager import DatabaseManager
+from data_manager.db_manager import DatabaseManager
 
 
 class JobTracker:

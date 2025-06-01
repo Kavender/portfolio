@@ -1,14 +1,14 @@
 from typing import List, Tuple
 import time
 from selenium import webdriver
-from src.utils.utils import (
+from utils.utils import (
     batch,
-    clean_extracted_text, 
-    extract_question_from_url, 
+    clean_extracted_text,
+    extract_question_from_url,
     hash_text_to_digits
 )
-from src.utils.logger import default_logger as logger
-from src.utils.retrieval_utils import login_to_interview_query, extract_content_from_tab
+from utils.logger import default_logger as logger
+from utils.retrieval_utils import login_to_interview_query, extract_content_from_tab
 
 
 class WebScraper:

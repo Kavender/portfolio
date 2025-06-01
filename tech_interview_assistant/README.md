@@ -79,6 +79,21 @@ The system now includes a dedicated jobs directory for job-related functionality
    pip install -r requirements.txt
    ```
 
+3. Install the package in development mode for simplified imports:
+   ```bash
+   # From the project root directory
+   pip install -e .
+   ```
+   
+   This allows you to use imports without the `src.` prefix:
+   ```python
+   # Instead of
+   from src.vector_store.document_processor import DocumentProcessor
+   
+   # You can use
+   from vector_store.document_processor import DocumentProcessor
+   ```
+
 ### Credentials Setup
 
 1. **API Keys**
@@ -97,7 +112,7 @@ The system now includes a dedicated jobs directory for job-related functionality
    - The authentication token will be generated automatically when you first run the application
    - If you need to manually generate or refresh the token, you can use the `get_auth_token` function from `src/utils/gmail_utils.py`:
      ```python
-     from src.utils.gmail_utils import get_auth_token
+     from utils.gmail_utils import get_auth_token
      
      # Generate a new token
      get_auth_token(
@@ -137,19 +152,19 @@ The system supports incremental updates to process new emails since the last run
 
 ```bash
 # Run incremental update with default settings
-python -m src.jobs.run_incremental_update
+python -m jobs.run_incremental_update
 
 # Run with custom settings
-python -m src.jobs.run_incremental_update --sender-lists interviewquery.com --default-days 7 --email-limit 50
+python -m jobs.run_incremental_update --sender-lists interviewquery.com --default-days 7 --email-limit 50
 
 # Force collection of emails regardless of last run timestamp
-python -m src.jobs.run_incremental_update --force-collection --default-days 7
+python -m jobs.run_incremental_update --force-collection --default-days 7
 
 # Skip vector storage but generate solutions
-python -m src.jobs.run_incremental_update --default-days 7 --force-collection --skip-vector-storage
+python -m jobs.run_incremental_update --default-days 7 --force-collection --skip-vector-storage
 
 # Set timeout for API requests
-python -m src.jobs.run_incremental_update --default-days 7 --timeout 1200
+python -m jobs.run_incremental_update --default-days 7 --timeout 1200
 ```
 
 For more details on the incremental update script, see [Scripts README](scripts/README.md).
@@ -157,7 +172,7 @@ For more details on the incremental update script, see [Scripts README](scripts/
 ### Python API
 
 ```python
-from src.jobs.main_agentic_flow import TechInterviewAssistant
+from jobs.main_agentic_flow import TechInterviewAssistant
 
 # Initialize the assistant
 assistant = TechInterviewAssistant()
@@ -187,7 +202,7 @@ result = assistant.run_full_workflow(
 The system now automatically classifies questions as either "coding" or "conceptual" and uses specialized solvers for each type:
 
 ```python
-from src.graph.workflow_manager import WorkflowManager
+from graph.workflow_manager import WorkflowManager
 
 # Initialize the workflow manager
 workflow_manager = WorkflowManager()

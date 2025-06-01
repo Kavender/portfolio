@@ -2,10 +2,10 @@ from typing import List, Dict, Any, Optional
 import time
 import pandas as pd
 from datetime import datetime, timedelta
-from src.utils.logger import get_logger
-from src.data_manager.job_tracker import JobTracker
-from src.email_processor.email_processor import EmailProcessor
-from src.email_processor.gmail_utils import init_google_credentials
+from utils.logger import get_logger
+from data_manager.job_tracker import JobTracker
+from email_processor.email_processor import EmailProcessor
+from email_processor.gmail_utils import init_google_credentials
 
 
 class EmailService:

@@ -4,7 +4,7 @@ import chromadb
 from langchain_core.documents import Document
 from langchain_chroma import Chroma
 from langchain_community.retrievers import BM25Retriever
-from src.graph.retrieval import HybridRetriever
+from graph.retrieval import HybridRetriever
 
 
 class VectorStoreManager:
@@ -12,7 +12,7 @@ class VectorStoreManager:
     Class for managing vector stores and retrievers.
     """
     
-    def __init__(self, embedding_model, persist_directory: str = "./src/data/chroma_db"):
+    def __init__(self, embedding_model, persist_directory: str = "./data/chroma_db"):
         """
         Initialize the VectorStoreManager with an embedding model.
         

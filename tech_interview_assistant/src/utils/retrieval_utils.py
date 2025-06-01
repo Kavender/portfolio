@@ -2,7 +2,7 @@ import os
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from src.utils.logger import default_logger as logger
+from utils.logger import default_logger as logger
 
 PAGE_LOAD_WAITS = 3
 

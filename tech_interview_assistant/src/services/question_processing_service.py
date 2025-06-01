@@ -4,10 +4,10 @@ import pandas as pd
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, StateGraph, START
-from src.utils.logger import get_logger
-from src.data_manager.job_tracker import JobTracker
-from src.graph.workflow_manager import WorkflowManager
-from src.solution_generator.solution_generator import SolutionGenerator
+from utils.logger import get_logger
+from data_manager.job_tracker import JobTracker
+from graph.workflow_manager import WorkflowManager
+from solution_generator.solution_generator import SolutionGenerator
 
 
 class QuestionProcessingService:

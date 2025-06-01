@@ -15,7 +15,7 @@ from langchain_community.tools.gmail.search import GmailSearch
 from langchain_google_community.gmail.utils import get_gmail_credentials
 from langchain_community.tools.gmail.utils import clean_email_body, build_resource_service
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, retry_if_exception
-from src.utils.logger import default_logger as logger
+from utils.logger import default_logger as logger
 
 
 _ = load_dotenv(find_dotenv())

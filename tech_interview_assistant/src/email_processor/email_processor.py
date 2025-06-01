@@ -4,8 +4,8 @@ import re
 import pandas as pd
 from datetime import datetime
 from langchain_core.messages import HumanMessage
-from src.utils.logger import get_logger
-from src.email_processor.gmail_utils import read_emails_from_senders
+from utils.logger import get_logger
+from email_processor.gmail_utils import read_emails_from_senders
 
 
 class EmailProcessor:

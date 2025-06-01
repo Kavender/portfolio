@@ -5,7 +5,7 @@ import argparse
 from dotenv import load_dotenv
 from jobs.main_agentic_flow import TechInterviewAssistant
 from jobs.run_incremental_update import main as run_incremental_update
-from src.utils.logger import default_logger as logger
+from utils.logger import default_logger as logger
 
 
 def main():

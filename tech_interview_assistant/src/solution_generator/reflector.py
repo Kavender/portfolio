@@ -5,8 +5,8 @@ import json
 from pydantic import BaseModel, Field
 from langchain.prompts.chat import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from src.utils.parser_utils import CustomPydanticOutputParser
-from src.utils.logger import default_logger as logger
+from utils.parser_utils import CustomPydanticOutputParser
+from utils.logger import default_logger as logger
 
 
 class Feedback(BaseModel):

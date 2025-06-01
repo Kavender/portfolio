@@ -8,7 +8,7 @@ recording metrics, and maintaining a history of job runs.
 import time
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
-from src.data_manager.db_manager import DatabaseManager
+from data_manager.db_manager import DatabaseManager
 
 
 class JobTracker:

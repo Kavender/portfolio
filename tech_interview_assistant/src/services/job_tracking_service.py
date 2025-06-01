@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional, List
-from src.utils.logger import get_logger
-from src.data_manager.job_tracker import JobTracker
+from utils.logger import get_logger
+from data_manager.job_tracker import JobTracker
 
 
 class JobTrackingService:

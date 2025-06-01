@@ -2,7 +2,7 @@ from langchain_core.messages import AIMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.language_models import BaseChatModel
 from langchain_core.output_parsers import PydanticOutputParser
-from src.graph.schemas import State, FullSolution, ConceptualSolution
+from graph.schemas import State, FullSolution, ConceptualSolution
 
 
 class ConceptualSolver:

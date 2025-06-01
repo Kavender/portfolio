@@ -5,16 +5,16 @@ from langchain_core.messages import HumanMessage
 from langchain_core.documents import Document
 from langgraph.graph import END, StateGraph, START
 
-from src.utils.logger import get_logger
-from src.graph.retrieval import HybridRetriever
-from src.graph.workflow_manager import WorkflowManager
-from src.vector_store.document_processor import DocumentProcessor
-from src.email_processor.gmail_utils import init_google_credentials
-from src.services.data_service import DataService
-from src.services.email_service import EmailService
-from src.services.question_processing_service import QuestionProcessingService
-from src.services.vector_store_service import VectorStoreService
-from src.services.job_tracking_service import JobTrackingService
+from utils.logger import get_logger
+from graph.retrieval import HybridRetriever
+from graph.workflow_manager import WorkflowManager
+from vector_store.document_processor import DocumentProcessor
+from email_processor.gmail_utils import init_google_credentials
+from services.data_service import DataService
+from services.email_service import EmailService
+from services.question_processing_service import QuestionProcessingService
+from services.vector_store_service import VectorStoreService
+from services.job_tracking_service import JobTrackingService
 
 
 class TechInterviewAssistant:

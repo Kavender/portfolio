@@ -4,11 +4,11 @@ import pandas as pd
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 
-from src.vector_store.vector_store_manager import VectorStoreManager
-from src.vector_store.document_processor import DocumentProcessor
-from src.graph.retrieval import HybridRetriever
-from src.data_manager.job_tracker import JobTracker
-from src.utils.logger import get_logger
+from vector_store.vector_store_manager import VectorStoreManager
+from vector_store.document_processor import DocumentProcessor
+from graph.retrieval import HybridRetriever
+from data_manager.job_tracker import JobTracker
+from utils.logger import get_logger
 
 
 class VectorStoreService:

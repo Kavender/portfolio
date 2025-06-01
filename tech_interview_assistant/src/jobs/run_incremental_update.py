@@ -16,16 +16,13 @@ import sys
 import time
 import argparse
 import traceback
-from src.utils.logger import setup_logger
-from src.services.email_service import EmailService
-from src.services.question_processing_service import QuestionProcessingService
-from src.services.vector_store_service import VectorStoreService
-from src.services.data_service import DataService
-from src.services.job_tracking_service import JobTrackingService
-from src.vector_store.document_processor import DocumentProcessor
-
-# Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from utils.logger import setup_logger
+from services.email_service import EmailService
+from services.question_processing_service import QuestionProcessingService
+from services.vector_store_service import VectorStoreService
+from services.data_service import DataService
+from services.job_tracking_service import JobTrackingService
+from vector_store.document_processor import DocumentProcessor
 
 
 def parse_args():
@@ -320,7 +317,6 @@ def store_in_vector_db(
     if skip_solution_generation:
         # If solution generation was skipped, we need to create dummy solutions
         # for the questions before storing them in the vector database
-        from src.vector_store.document_processor import DocumentProcessor
         
         # Create a document processor
         doc_processor = DocumentProcessor(solver=None)

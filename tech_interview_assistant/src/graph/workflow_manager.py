@@ -6,11 +6,11 @@ from langgraph.graph import END, StateGraph, START
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain.prompts.chat import SystemMessagePromptTemplate
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate, MessagesPlaceholder
-from src.graph.schemas import State
-from src.graph.retrieval import retrieve_examples
-from src.graph.solver import Solver, ConceptualSolver
-from src.services.vector_store_service import VectorStoreService
-from src.vector_store.document_processor import DocumentProcessor
+from graph.schemas import State
+from graph.retrieval import retrieve_examples
+from graph.solver import Solver, ConceptualSolver
+from services.vector_store_service import VectorStoreService
+from vector_store.document_processor import DocumentProcessor
 
 
 class WorkflowManager:

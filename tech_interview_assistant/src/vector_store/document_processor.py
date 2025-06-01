@@ -3,8 +3,8 @@ import logging
 import pandas as pd
 from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
-from src.graph.retrieval import format_example
-from src.utils.logger import default_logger as logger
+from graph.retrieval import format_example
+from utils.logger import default_logger as logger
 
 
 # TODO: is the class really necessary, if not, let's remove the mode and only keep the solution_generator

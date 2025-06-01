@@ -1,8 +1,8 @@
 from typing import Dict, Any, Optional, List, Union
 from langchain_core.messages import HumanMessage, AIMessage
-from src.graph.workflow_manager import WorkflowManager
-from src.solution_generator.reflector import SolutionReflector
-from src.solution_generator.validators import SolutionValidator
+from graph.workflow_manager import WorkflowManager
+from solution_generator.reflector import SolutionReflector
+from solution_generator.validators import SolutionValidator
 
 
 class SolutionGenerator:
