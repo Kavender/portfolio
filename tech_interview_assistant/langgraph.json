@@ -1,0 +1,36 @@
+{
+  "dockerfile_lines": [],
+  "graphs": {
+    "main": "./src/graph/workflow_manager.py:graph"
+  },
+  "env": "./.env",
+  "store": {
+    "index": {
+      "dims": 1536,
+      "embed": "openai:text-embedding-3-small",
+      "api_key": "OPENAI_API_KEY"
+    },
+    "env": ".env"
+  },
+  "python_version": "3.11",
+  "dependencies": [
+    ".",
+    "langchain-anthropic>=0.1.1",
+    "langchain-openai>=0.2.0",
+    "langchain-google-community>=2.0.0",
+    "langchain-community>=0.3.0",
+    "langchain>=0.3.0",
+    "langchain-core>=0.1.0",
+    "langgraph>=0.2.20",
+    "pydantic>=2.0.0",
+    "google-auth-httplib2>=0.2.0",
+    "google-auth-oauthlib>=1.2.1",
+    "google-api-python-client>=2.140.0",
+    "pandas>=2.2.2",
+    "beautifulsoup4>=4.12.3",
+    "chromadb>=0.4.18",
+    "ipython>=8.0.0",
+    "python-dotenv>=1.0.1",
+    "langchain-chroma==0.1.0"
+  ]
+}

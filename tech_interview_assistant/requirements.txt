@@ -1,0 +1,41 @@
+# Core dependencies
+python-dotenv>=1.0.1
+langchain>=0.3.0
+langgraph>=0.2.20
+langchain-openai>=0.2.0
+langchain-anthropic>=0.1.1
+langchain-google-community>=2.0.0
+langchain-community>=0.3.0
+pydantic>=2.0.0
+
+# Google API
+google-auth-httplib2>=0.2.0
+google-auth-oauthlib>=1.2.1
+google-api-python-client>=2.140.0
+google-search-results>=2.4.2
+
+# Data processing
+pandas>=2.2.2
+beautifulsoup4>=4.12.3
+unstructured>=0.15.3
+
+# Vector store and embeddings
+chromadb==0.4.18
+langchain-chroma==0.1.0
+llama-index>=0.10.67
+rank_bm25>=0.2.2
+
+# Web scraping
+selenium>=4.23.1
+
+# Machine learning
+torch>=2.5.0
+
+# Development and debugging
+ipdb>=0.13.13
+tenacity>=8.0.0
+ipython>=8.0.0
+
+# Testing
+pytest>=7.0.0
+pytest-mock>=3.10.0

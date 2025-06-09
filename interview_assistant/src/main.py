@@ -7,10 +7,9 @@ def run_interview():
     'hiring_team': 'Data Science (R&D)',
     'score_threshold': 80,
     'job_description_path': './src/data/jobs/DS_JD.docx',
-    'resume_path': './src/data/candidates/candidate_Resume.pdf',
-    'assignment_path': './src/data/candidates/candidate_homework.docx'
+    'resume_path': './src/data/candidates/anne.docx',
+    'assignment_path': './src/data/candidates/Research Notes Problem 2.docx'
     })
-    result=crew.kickoff()
     output_file_path = "./src/data/candidates/candidate_eval_report.md"
 
     # Store the result as a Markdown file
