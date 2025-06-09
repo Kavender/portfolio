@@ -1,8 +1,28 @@
 # Tech Interview Assistant
 
-A multi-agent system built with LangChain and LangGraph to assist candidates in preparing for data science technical interviews.
+Tech Interview Assistant is an AI-powered multi-agent system built with LangChain and LangGraph to help candidates prepare for data science technical interviews through intelligent question collection, solution generation, and knowledge management.
 
-## Overview and Use Cases
+## Table of Contents
+
+- [Overview](#overview)
+- [General Setup](#general-setup)
+  - [Environment Setup](#environment-setup)
+  - [Credentials Setup](#credentials-setup)
+  - [Configuration](#configuration)
+- [Run Locally](#run-locally)
+  - [Setup Tech Interview Assistant](#setup-tech-interview-assistant)
+  - [LangGraph Studio Integration](#langgraph-studio-integration)
+- [Usage](#usage)
+  - [Command Line Interface](#command-line-interface)
+  - [Python API](#python-api)
+  - [Incremental Updates](#incremental-updates)
+- [Advanced Features](#advanced-features)
+- [Project Structure](#project-structure)
+- [Testing](#testing)
+- [Documentation](#documentation)
+- [License](#license)
+
+## Overview
 
 The Tech Interview Assistant is designed to help with technical interview preparation by:
 
@@ -13,9 +33,7 @@ The Tech Interview Assistant is designed to help with technical interview prepar
 5. **Question Classification** - Automatically classify questions as coding or conceptual
 6. **Mock Interview Prep** - Under Development
 
-The system uses LangGraph to create a sophisticated workflow that connects these components.
-
-## Components
+The system uses LangGraph to create a sophisticated workflow that connects these components with specialized solvers for different question types.
 
 ### Core Components
 
@@ -28,7 +46,7 @@ The system uses LangGraph to create a sophisticated workflow that connects these
 - **WebScraper**: Scrapes questions and solutions from web pages
 - **JobTracker**: Tracks job runs and metrics for monitoring and incremental processing
 
-### Service Modules
+### Service Architecture
 
 The system uses a service-oriented architecture:
 
@@ -38,19 +56,13 @@ The system uses a service-oriented architecture:
 - **DataService**: Handles data management functionality
 - **JobTrackingService**: Handles job tracking and metrics
 
-### Jobs Directory
-
-The system now includes a dedicated jobs directory for job-related functionality:
-
-- **main_agentic_flow.py**: Implements the main workflow as a class
-- **run_incremental_update.py**: Handles incremental updates with enhanced error handling
-
-## Installation and Setup
+## General Setup
 
 ### Environment Setup
 
 1. Fork and clone this repository
-2. Set up a virtual environment using one of these methods:
+2. Create a Python virtualenv and activate it (e.g. `pyenv virtualenv 3.11.1 tech-interview-assistant`, `pyenv activate tech-interview-assistant`)
+3. Install dependencies using one of these methods:
    
    **Option 1: Using Poetry (recommended)**
    ```bash
@@ -79,7 +91,7 @@ The system now includes a dedicated jobs directory for job-related functionality
    pip install -r requirements.txt
    ```
 
-3. Install the package in development mode for simplified imports:
+4. Install the package in development mode for simplified imports:
    ```bash
    # From the project root directory
    pip install -e .
@@ -97,9 +109,11 @@ The system now includes a dedicated jobs directory for job-related functionality
 ### Credentials Setup
 
 1. **API Keys**
-   - Export OpenAI API key: `export OPENAI_API_KEY=your_key_here`
-   - Export Anthropic API key: `export ANTHROPIC_API_KEY=your_key_here`
-   - Export LangSmith API key (optional): `export LANGSMITH_API_KEY=your_key_here`
+   ```bash
+   export OPENAI_API_KEY=your_key_here
+   export ANTHROPIC_API_KEY=your_key_here
+   export LANGSMITH_API_KEY=your_key_here  # Optional
+   ```
 
 2. **Google Authentication Setup**
    - Get OAuth2.0 Credentials from [Google Cloud Console](https://cloud.google.com/docs/authentication/getting-started)
@@ -110,24 +124,63 @@ The system now includes a dedicated jobs directory for job-related functionality
      GOOGLE_APP_TOKEN=./src/config/gmail_token.json
      ```
    - The authentication token will be generated automatically when you first run the application
-   - If you need to manually generate or refresh the token, you can use the `get_auth_token` function from `src/utils/gmail_utils.py`:
-     ```python
-     from utils.gmail_utils import get_auth_token
-     
-     # Generate a new token
-     get_auth_token(
-         credential_file_path="./src/config/credentials.json",
-         token_file_path="./src/config/gmail_token.json"
-     )
-     ```
-   - If the token expires, you'll see an error like: `google.auth.exceptions.RefreshError: ('invalid_grant: Token has been expired or revoked.', {'error': 'invalid_grant', 'error_description': 'Token has been expired or revoked.'})`. The system will automatically attempt to regenerate the token, or you can manually delete the token file and regenerate it.
-   - Make sure grant the same set of scopes on the page `GmailReader wants access to your Google Account`, otherwise token files cannot be re-generated properly.Instead it will raise `Warning: Scope has changed from X to Y`
+
+> **Note**: If you're using a personal email (non-Google Workspace), select "External" as the User Type in the OAuth consent screen. With "External" selected, you must add your email as a test user in the Google Cloud Console under "OAuth consent screen" > "Test users" to avoid the "App has not completed verification" error.
+
+### Configuration
+
+The system automatically handles most configuration, but you can customize:
+
+- **Email Processing**: Configure sender lists and processing limits
+- **Vector Store**: Adjust embedding models and search parameters
+- **Solution Generation**: Customize LLM models and prompts
+- **Workflow**: Modify retry logic and evaluation criteria
+
+## Run Locally
+
+### Setup Tech Interview Assistant
+
+1. Install LangGraph CLI: `pip install -U "langgraph-cli[inmem]"`
+2. Run development server: `langgraph dev`
+
+This will start the LangGraph development server with:
+- 🚀 **API**: http://127.0.0.1:2024
+- 🎨 **Studio UI**: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
+- 📚 **API Docs**: http://127.0.0.1:2024/docs
+
+### LangGraph Studio Integration
+
+This project is fully compatible with LangGraph Studio for workflow visualization and debugging:
+
+1. **Automatic Configuration**: The `langgraph.json` is pre-configured to work with Studio
+2. **Real Database Integration**: Studio uses your actual vector store and retrieval system
+3. **Workflow Visualization**: See the complete workflow: classify → draft → retrieve → solve → evaluate
+4. **Interactive Debugging**: Test different question types and debug workflow logic
+
+The configuration in `langgraph.json`:
+```json
+{
+  "python_version": "3.11",
+  "dependencies": ["."],
+  "graphs": {
+    "main": "./src/graph/workflow_manager.py:graph"
+  },
+  "store": {
+    "index": {
+      "embed": "openai:text-embedding-3-small",
+      "dims": 1536,
+      "api_key": "OPENAI_API_KEY"
+    },
+    "env": ".env"
+  }
+}
+```
 
 ## Usage
 
 ### Command Line Interface
 
-The system includes a command-line interface for easy usage:
+The system includes a comprehensive command-line interface:
 
 ```bash
 # Process questions from emails
@@ -137,37 +190,14 @@ The system includes a command-line interface for easy usage:
 ./tech_interview_assistant.py query "How would you implement a recommendation system?" --k 3
 
 # Scrape questions from URLs
-./tech_interview_assistant.py scrape "https://www.interviewquery.com/questions/example1" "https://www.interviewquery.com/questions/example2" --batch-size 5
+./tech_interview_assistant.py scrape "https://www.interviewquery.com/questions/example1" --batch-size 5
 
-# Store questions from a CSV file in the vector database
+# Store questions from a CSV file
 ./tech_interview_assistant.py store path/to/questions.csv --batch-size 10
 
 # Run incremental update to process new emails
 ./tech_interview_assistant.py incremental --default-days 7 --email-limit 100
 ```
-
-### Incremental Updates
-
-The system supports incremental updates to process new emails since the last run:
-
-```bash
-# Run incremental update with default settings
-python -m jobs.run_incremental_update
-
-# Run with custom settings
-python -m jobs.run_incremental_update --sender-lists interviewquery.com --default-days 7 --email-limit 50
-
-# Force collection of emails regardless of last run timestamp
-python -m jobs.run_incremental_update --force-collection --default-days 7
-
-# Skip vector storage but generate solutions
-python -m jobs.run_incremental_update --default-days 7 --force-collection --skip-vector-storage
-
-# Set timeout for API requests
-python -m jobs.run_incremental_update --default-days 7 --timeout 1200
-```
-
-For more details on the incremental update script, see [Scripts README](scripts/README.md).
 
 ### Python API
 
@@ -195,11 +225,32 @@ result = assistant.run_full_workflow(
 )
 ```
 
+### Incremental Updates
+
+The system supports incremental updates to process new emails since the last run:
+
+```bash
+# Run incremental update with default settings
+python -m jobs.run_incremental_update
+
+# Run with custom settings
+python -m jobs.run_incremental_update --sender-lists interviewquery.com --default-days 7 --email-limit 50
+
+# Force collection of emails regardless of last run timestamp
+python -m jobs.run_incremental_update --force-collection --default-days 7
+
+# Skip vector storage but generate solutions
+python -m jobs.run_incremental_update --default-days 7 --force-collection --skip-vector-storage
+
+# Set timeout for API requests
+python -m jobs.run_incremental_update --default-days 7 --timeout 1200
+```
+
 ## Advanced Features
 
-### Question Classification
+### Question Classification and Specialized Solvers
 
-The system now automatically classifies questions as either "coding" or "conceptual" and uses specialized solvers for each type:
+The system automatically classifies questions as either "coding" or "conceptual" and uses specialized solvers:
 
 ```python
 from graph.workflow_manager import WorkflowManager
@@ -207,24 +258,61 @@ from graph.workflow_manager import WorkflowManager
 # Initialize the workflow manager
 workflow_manager = WorkflowManager()
 
-# Create the workflow
+# Create and run the workflow
 workflow = workflow_manager.create_workflow()
-
-# Get the compiled graph
 graph = workflow_manager.return_graph(show_workflow=True)
 
-# Invoke the workflow with a question
+# Invoke with a question
 result = graph.invoke({
     "messages": [HumanMessage(content="How would you implement a recommendation system?")]
 })
 ```
 
-### Multi-Question Processing
+### Hybrid Retrieval System
 
-Process multiple questions in sequence with state management:
+Combines BM25 (keyword-based) and vector search (semantic) for better results:
 
 ```python
-# Process a batch of questions
+hybrid_retriever = assistant.setup_hybrid_retriever(documents, alpha=0.5, k=3)
+similar_docs = hybrid_retriever.get_relevant_documents(query)
+```
+
+### Circuit Breaker Pattern
+
+Prevents cascading failures in critical components:
+
+```python
+# Create a circuit breaker
+email_circuit_breaker = CircuitBreaker(failure_threshold=3, reset_timeout=300)
+
+# Use with operations
+if email_circuit_breaker.can_execute():
+    try:
+        result = perform_operation()
+        email_circuit_breaker.record_success()
+    except Exception as e:
+        email_circuit_breaker.record_failure()
+        handle_error(e)
+```
+
+### Batch Processing
+
+Process multiple questions efficiently:
+
+```python
+questions = [
+    "How would you implement a recommendation system?", 
+    "Explain the bias-variance tradeoff."
+]
+results = assistant.process_questions_batch(questions, batch_size=10)
+```
+
+### Multi-Question Processing
+
+Process sequences with state management:
+
+```python
+# Process a batch of questions with state tracking
 result = assistant.process_email_questions(
     sender_lists=["interviewquery.com"],
     limit=10
@@ -237,111 +325,56 @@ The system will:
 3. Maintain state between questions
 4. Track progress through the batch
 
-### Circuit Breaker Pattern
-
-The system uses circuit breakers for critical components to prevent cascading failures:
-
-```python
-# Create a circuit breaker
-email_circuit_breaker = CircuitBreaker(failure_threshold=3, reset_timeout=300)
-
-# Check if operation can be executed
-if email_circuit_breaker.can_execute():
-    try:
-        # Perform operation
-        result = perform_operation()
-        
-        # Record success
-        email_circuit_breaker.record_success()
-    except Exception as e:
-        # Record failure
-        email_circuit_breaker.record_failure()
-        
-        # Handle error
-        handle_error(e)
-```
-
-### Batch Processing
-
-Process multiple questions at once:
-
-```python
-questions = ["How would you implement a recommendation system?", "Explain the bias-variance tradeoff."]
-results = assistant.process_questions_batch(questions, batch_size=10)
-```
-
-### Hybrid Retrieval
-
-The system uses a hybrid retrieval approach that combines BM25 (keyword-based) and vector search (semantic) for better results:
-
-```python
-hybrid_retriever = assistant.setup_hybrid_retriever(documents, alpha=0.5, k=3)
-similar_docs = hybrid_retriever.get_relevant_documents(query)
-```
-
-## Langraph Studio Compatibility
-
-This project is compatible with Langraph Studio, allowing you to visualize and interact with the workflow graph.
-
-### Setup for Langraph Studio
-
-1. Ensure you have the correct configuration in `langgraph.json`:
-   ```json
-   {
-     "python_version": "3.11",
-     "dependencies": ["."],
-     "graphs": {
-       "main": "./src/graph/workflow_manager.py:WorkflowManager.return_graph"
-     },
-     "store": {
-       "index": {
-         "embed": "openai:text-embedding-3-small",
-         "dims": 1536,
-         "api_key": "your_openai_api_key"
-       },
-       "env": ".env"
-     }
-   }
-   ```
-
-2. Open the project in Langraph Studio to visualize and interact with the workflow graph.
-
 ## Project Structure
 
-The project has been reorganized for better modularity:
+The project is organized for modularity and maintainability:
 
-- `src/`: Main source code directory
-  - `services/`: Service modules that provide core functionality
-  - `email_processor/`: Email processing components
-  - `graph/`: LangGraph workflow definitions
-    - `workflow_manager.py`: Manages the solution generation workflow
-    - `retrieval.py`: Handles retrieval of similar examples
-    - `solver.py`: Specialized solvers for different question types
-  - `jobs/`: Job-related functionality
-    - `main_agentic_flow.py`: Main workflow implementation
-    - `run_incremental_update.py`: Incremental update script
-  - `solution_generator/`: Solution generation components
-  - `vector_store/`: Vector database components
-  - `web_scraper/`: Web scraping components
-  - `utils/`: Utility functions and helpers
-  - `main.py`: Main entry point for the application
-- `scripts/`: Utility scripts
-- `tech_interview_assistant.py`: CLI entry point
+```
+src/
+├── services/           # Service modules providing core functionality
+├── email_processor/    # Email processing components
+├── graph/             # LangGraph workflow definitions
+│   ├── workflow_manager.py  # Main workflow orchestration
+│   ├── retrieval.py         # Retrieval of similar examples
+│   └── solver.py           # Specialized solvers for question types
+├── jobs/              # Job-related functionality
+│   ├── main_agentic_flow.py     # Main workflow implementation
+│   └── run_incremental_update.py # Incremental update script
+├── solution_generator/ # Solution generation components
+├── vector_store/      # Vector database components
+├── utils/             # Utility functions and helpers
+└── main.py           # Main entry point
+
+scripts/               # Utility scripts
+tech_interview_assistant.py  # CLI entry point
+langgraph.json        # LangGraph configuration
+```
 
 ## Testing
 
-Run the tests to verify that the system works correctly:
+Run the tests to verify system functionality:
 
 ```bash
 ./tests/test_tech_interview_assistant.py
+```
+
+For more detailed testing:
+
+```bash
+# Test solution generator
+python scripts/test_solution_generator.py
+
+# Test tech interview assistant
+python scripts/test_tech_interview_assistant.py
 ```
 
 ## Documentation
 
 For more detailed documentation, see:
 
-- [Tech Interview Workflow](docs/tech_interview_workflow.md): Detailed description of the workflow
-- [Workflow Diagram](docs/workflow_diagram.md): Visual representation of the workflow
+- [Tech Interview Workflow](docs/tech_interview_workflow.md): Detailed workflow description
+- [Workflow Diagram](docs/workflow_diagram.md): Visual workflow representation
+- [Scripts README](scripts/README.md): Detailed script documentation
 
 ## License
 

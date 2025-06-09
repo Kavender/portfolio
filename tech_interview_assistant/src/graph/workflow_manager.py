@@ -258,6 +258,16 @@ class WorkflowManager:
         
         return graph
     
+    @classmethod
+    def create_compiled_graph(cls):
+        """
+        Class method to create and return a compiled graph for LangGraph Studio.
+        This method is referenced in langgraph.json for Studio integration.
+        """
+        manager = cls()
+        workflow = manager.create_workflow()
+        return workflow.compile()
+    
     @staticmethod
     def _load_solver_prompt():
         system_message = SystemMessagePromptTemplate(prompt=PromptTemplate(
@@ -357,3 +367,17 @@ class WorkflowManager:
         
         # Set up the hybrid retriever using the vector store manager from the service
         return self.vector_store_service.setup_hybrid_retriever(documents=documents)
+
+
+# Create a module-level graph instance for LangGraph Studio
+def create_graph():
+    """
+    Module-level function to create and return a compiled graph for LangGraph Studio.
+    This function is referenced in langgraph.json for Studio integration.
+    """
+    manager = WorkflowManager()
+    workflow = manager.create_workflow()
+    return workflow.compile()
+
+# Export the graph at module level
+graph = create_graph()
